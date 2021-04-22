@@ -79,12 +79,15 @@ MODULE_DEVICE_TABLE(x86cpu, vmx_cpu_id);
  * Global counter for VM exits
  *
  */
-int vm_exits_cnt = 0;
+extern int vm_exits_cnt;
 
 /*
  * Global timer for total time spent in exit handler
  */
-unsigned long long vm_total_time = 0;
+extern unsigned long long vm_total_time;
+
+// EXPORT_SYMBOL(vm_exits_cnt);
+// EXPORT_SYMBOL(vm_total_time);
 
 bool __read_mostly enable_vpid = 1;
 module_param_named(vpid, enable_vpid, bool, 0444);

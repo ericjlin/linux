@@ -1480,8 +1480,8 @@ _modinst_:
 # boot a modules.dep even before / is mounted read-write.  However the
 # boot script depmod is the master version.
 PHONY += _modinst_post
-#_modinst_post: _modinst_
-#	$(call cmd,depmod)
+_modinst_post: _modinst_
+	$(call cmd,depmod)
 
 ifeq ($(CONFIG_MODULE_SIG), y)
 PHONY += modules_sign

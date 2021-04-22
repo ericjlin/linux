@@ -25,8 +25,10 @@
 #include <linux/time.h>
 #include <asm/msr.h>
 
-extern int vm_exits_cnt;
-extern unsigned long long vm_total_time;
+int vm_exits_cnt = 0;
+unsigned long long vm_total_time = 0;
+EXPORT_SYMBOL(vm_exits_cnt);
+EXPORT_SYMBOL(vm_total_time);
 
 /*
  * Unlike "struct cpuinfo_x86.x86_capability", kvm_cpu_caps doesn't need to be
@@ -1091,6 +1093,8 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 	struct kvm_cpuid_entry2 *entry;
 	bool exact, used_max_basic = false;
 
+	printk("DEBUg in kvm cpuid");
+
 	entry = kvm_find_cpuid_entry(vcpu, function, index);
 	exact = !!entry;
 
@@ -1142,12 +1146,16 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-
+	printk(KERN_INFO "DEBUG in emulate kvm cpuid");
+	// pr_info("test test test");
 	if (eax == 0x4fffffff) {
 	/*
 	 * set the total number of exits and time spent in exit
 	 */
+		pr_info("DEBUG EAX=0x%u\n", eax);
+		
 		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+		
 		eax = vm_exits_cnt;
 		ebx = (int)(vm_total_time >> 32);
 		ecx = vm_total_time;
