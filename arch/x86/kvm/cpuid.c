@@ -1093,8 +1093,6 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 	struct kvm_cpuid_entry2 *entry;
 	bool exact, used_max_basic = false;
 
-	printk("DEBUg in kvm cpuid");
-
 	entry = kvm_find_cpuid_entry(vcpu, function, index);
 	exact = !!entry;
 
@@ -1146,13 +1144,13 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	printk(KERN_INFO "DEBUG in emulate kvm cpuid");
+	printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
 	// pr_info("test test test");
 	if (eax == 0x4fffffff) {
 	/*
 	 * set the total number of exits and time spent in exit
 	 */
-		pr_info("DEBUG EAX=0x%u\n", eax);
+		printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
 		
 		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
 		
