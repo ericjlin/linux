@@ -28,6 +28,7 @@
 #include <linux/tboot.h>
 #include <linux/trace_events.h>
 #include <linux/entry-kvm.h>
+#include <linux/spinlock.h> // cmpe 283 assignment1 addition
 
 #include <asm/apic.h>
 #include <asm/asm.h>
@@ -79,12 +80,21 @@ MODULE_DEVICE_TABLE(x86cpu, vmx_cpu_id);
  * Global counter for VM exits
  *
  */
-extern int vm_exits_cnt;
+extern u32 vm_exits_cnt;
 
 /*
  * Global timer for total time spent in exit handler
  */
-extern unsigned long long vm_total_time;
+extern u64 vm_total_time;
+
+/*
+ * Spinlock for cmpe 283
+ *
+ */
+static spinlock_t vmExitCntLock;
+static bool isLockInit = FALSE;
+
+//spin_lock_init(&vmExitCntLock);
 
 // EXPORT_SYMBOL(vm_exits_cnt);
 // EXPORT_SYMBOL(vm_total_time);
@@ -6126,15 +6136,16 @@ unexpected_vmexit:
 
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
-	unsigned long long start_time, stop_time;
+	u64 start_time = rdtsc();
+	u64 delta_time;
 	int ret;
         
-	start_time = rdtsc();
+	if (!isLockInit) {
+		spin_lock_init(&vmExitCntLock);
+		isLockInit = TRUE;
+	}
 
-	vm_exits_cnt++;
 	ret = __vmx_handle_exit(vcpu, exit_fastpath);
-	stop_time = rdtsc();
-	vm_total_time += stop_time - start_time;
 
 	/*
 	 * Even when current exit reason is handled by KVM internally, we
@@ -6148,6 +6159,11 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		vcpu->run->flags |= KVM_RUN_X86_BUS_LOCK;
 		return 0;
 	}
+	delta_time = rdtsc() - start_time;
+	spin_lock(&vmExitCntLock);
+	vm_exits_cnt++;
+	vm_total_time += delta_time;
+	spin_unlock(&vmExitCntLock);
 	return ret;
 }
 

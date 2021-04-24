@@ -25,8 +25,9 @@
 #include <linux/time.h>
 #include <asm/msr.h>
 
-int vm_exits_cnt = 0;
-unsigned long long vm_total_time = 0;
+// CMPE 283, declare global variables to count exits and time in exits
+u32 vm_exits_cnt = 0;
+u64 vm_total_time = 0;
 EXPORT_SYMBOL(vm_exits_cnt);
 EXPORT_SYMBOL(vm_total_time);
 
