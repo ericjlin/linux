@@ -25,7 +25,9 @@
 #include <linux/time.h>
 #include <asm/msr.h>
 
-// CMPE 283, declare global variables to count exits and time in exits
+/*
+ *  CMPE 283 assignment 2, declare global variables to count exits and time in exits
+ */
 u32 vm_exits_cnt = 0;
 u64 vm_total_time = 0;
 EXPORT_SYMBOL(vm_exits_cnt);
@@ -1145,13 +1147,15 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
-	// pr_info("test test test");
-	if (eax == 0x4fffffff) {
 	/*
-	 * set the total number of exits and time spent in exit
+	 * CMPE 283 Assignment 2
 	 */
-		printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
+	if (eax == 0x4fffffff) {
+		/*
+		 * set the total number of exits and time spent in exit
+		 * # of exits will be set to eax and total time in ecx
+	 	*/
+		// printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
 		
 		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
 		

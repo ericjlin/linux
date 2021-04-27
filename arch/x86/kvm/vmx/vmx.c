@@ -77,27 +77,24 @@ MODULE_DEVICE_TABLE(x86cpu, vmx_cpu_id);
 #endif
 
 /*
- * Global counter for VM exits
+ * Global counter from cpuid.c for VM exits
  *
  */
 extern u32 vm_exits_cnt;
 
 /*
- * Global timer for total time spent in exit handler
+ * Global timer from cpuid.c for total time spent in exit handler
  */
 extern u64 vm_total_time;
 
 /*
- * Spinlock for cmpe 283
+ * Spinlock for cmpe 283 assignment 2
  *
  */
 static spinlock_t vmExitCntLock;
 static bool isLockInit = FALSE;
 
-//spin_lock_init(&vmExitCntLock);
 
-// EXPORT_SYMBOL(vm_exits_cnt);
-// EXPORT_SYMBOL(vm_total_time);
 
 bool __read_mostly enable_vpid = 1;
 module_param_named(vpid, enable_vpid, bool, 0444);
@@ -6134,12 +6131,16 @@ unexpected_vmexit:
 	return 0;
 }
 
+/*
+ * CMPE 283 Assignment 2
+ * Update vm exit and time in vm counter here
+ */
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
 	u64 start_time = rdtsc();
 	u64 delta_time;
 	int ret;
-        
+        // grab lock if available 
 	if (!isLockInit) {
 		spin_lock_init(&vmExitCntLock);
 		isLockInit = TRUE;
