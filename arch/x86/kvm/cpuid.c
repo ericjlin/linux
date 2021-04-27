@@ -14,7 +14,6 @@
 #include <linux/vmalloc.h>
 #include <linux/uaccess.h>
 #include <linux/sched/stat.h>
-
 #include <asm/processor.h>
 #include <asm/user.h>
 #include <asm/fpu/xstate.h>
@@ -23,6 +22,16 @@
 #include "mmu.h"
 #include "trace.h"
 #include "pmu.h"
+#include <linux/time.h>
+#include <asm/msr.h>
+
+/*
+ *  CMPE 283 assignment 2, declare global variables to count exits and time in exits
+ */
+u32 vm_exits_cnt = 0;
+u64 vm_total_time = 0;
+EXPORT_SYMBOL(vm_exits_cnt);
+EXPORT_SYMBOL(vm_total_time);
 
 /*
  * Unlike "struct cpuinfo_x86.x86_capability", kvm_cpu_caps doesn't need to be
@@ -1138,11 +1147,33 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
-	kvm_rax_write(vcpu, eax);
-	kvm_rbx_write(vcpu, ebx);
-	kvm_rcx_write(vcpu, ecx);
-	kvm_rdx_write(vcpu, edx);
+	/*
+	 * CMPE 283 Assignment 2
+	 */
+	if (eax == 0x4fffffff) {
+		/*
+		 * set the total number of exits and time spent in exit
+		 * # of exits will be set to eax and total time in ecx
+	 	*/
+		// printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
+		
+		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+		
+		eax = vm_exits_cnt;
+		ebx = (int)(vm_total_time >> 32);
+		ecx = vm_total_time;
+		kvm_rax_write(vcpu, eax);
+                kvm_rbx_write(vcpu, ebx);
+                kvm_rcx_write(vcpu, ecx);
+		kvm_rdx_write(vcpu, edx);
+	} else {
+		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+		kvm_rax_write(vcpu, eax);
+		kvm_rbx_write(vcpu, ebx);
+		kvm_rcx_write(vcpu, ecx);
+		kvm_rdx_write(vcpu, edx);
+	}
+
 	return kvm_skip_emulated_instruction(vcpu);
 }
 EXPORT_SYMBOL_GPL(kvm_emulate_cpuid);

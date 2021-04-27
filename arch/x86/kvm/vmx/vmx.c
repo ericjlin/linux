@@ -28,6 +28,7 @@
 #include <linux/tboot.h>
 #include <linux/trace_events.h>
 #include <linux/entry-kvm.h>
+#include <linux/spinlock.h> // cmpe 283 assignment1 addition
 
 #include <asm/apic.h>
 #include <asm/asm.h>
@@ -62,6 +63,7 @@
 #include "vmcs12.h"
 #include "vmx.h"
 #include "x86.h"
+#include <asm/msr.h>
 
 MODULE_AUTHOR("Qumranet");
 MODULE_LICENSE("GPL");
@@ -73,6 +75,26 @@ static const struct x86_cpu_id vmx_cpu_id[] = {
 };
 MODULE_DEVICE_TABLE(x86cpu, vmx_cpu_id);
 #endif
+
+/*
+ * Global counter from cpuid.c for VM exits
+ *
+ */
+extern u32 vm_exits_cnt;
+
+/*
+ * Global timer from cpuid.c for total time spent in exit handler
+ */
+extern u64 vm_total_time;
+
+/*
+ * Spinlock for cmpe 283 assignment 2
+ *
+ */
+static spinlock_t vmExitCntLock;
+static bool isLockInit = FALSE;
+
+
 
 bool __read_mostly enable_vpid = 1;
 module_param_named(vpid, enable_vpid, bool, 0444);
@@ -5968,8 +5990,9 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	WARN_ON_ONCE(vmx->nested.nested_run_pending);
 
 	/* If guest state is invalid, start emulating */
-	if (vmx->emulation_required)
+	if (vmx->emulation_required) {
 		return handle_invalid_guest_state(vcpu);
+	}
 
 	if (is_guest_mode(vcpu)) {
 		/*
@@ -5992,8 +6015,9 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		 */
 		nested_mark_vmcs12_pages_dirty(vcpu);
 
-		if (nested_vmx_reflect_vmexit(vcpu))
+		if (nested_vmx_reflect_vmexit(vcpu)) {
 			return 1;
+		}
 	}
 
 	if (exit_reason.failed_vmentry) {
@@ -6002,6 +6026,7 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		vcpu->run->fail_entry.hardware_entry_failure_reason
 			= exit_reason.full;
 		vcpu->run->fail_entry.cpu = vcpu->arch.last_vmentry_cpu;
+
 		return 0;
 	}
 
@@ -6011,6 +6036,7 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		vcpu->run->fail_entry.hardware_entry_failure_reason
 			= vmcs_read32(VM_INSTRUCTION_ERROR);
 		vcpu->run->fail_entry.cpu = vcpu->arch.last_vmentry_cpu;
+
 		return 0;
 	}
 
@@ -6062,24 +6088,26 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		}
 	}
 
-	if (exit_fastpath != EXIT_FASTPATH_NONE)
+	if (exit_fastpath != EXIT_FASTPATH_NONE) {
 		return 1;
+	}
 
 	if (exit_reason.basic >= kvm_vmx_max_exit_handlers)
 		goto unexpected_vmexit;
 #ifdef CONFIG_RETPOLINE
-	if (exit_reason.basic == EXIT_REASON_MSR_WRITE)
+	if (exit_reason.basic == EXIT_REASON_MSR_WRITE) {
 		return kvm_emulate_wrmsr(vcpu);
-	else if (exit_reason.basic == EXIT_REASON_PREEMPTION_TIMER)
+	} else if (exit_reason.basic == EXIT_REASON_PREEMPTION_TIMER) {
 		return handle_preemption_timer(vcpu);
-	else if (exit_reason.basic == EXIT_REASON_INTERRUPT_WINDOW)
+	} else if (exit_reason.basic == EXIT_REASON_INTERRUPT_WINDOW) {
 		return handle_interrupt_window(vcpu);
-	else if (exit_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT)
+	} else if (exit_reason.basic == EXIT_REASON_EXTERNAL_INTERRUPT) {
 		return handle_external_interrupt(vcpu);
-	else if (exit_reason.basic == EXIT_REASON_HLT)
+	} else if (exit_reason.basic == EXIT_REASON_HLT) {
 		return kvm_emulate_halt(vcpu);
-	else if (exit_reason.basic == EXIT_REASON_EPT_MISCONFIG)
+	} else if (exit_reason.basic == EXIT_REASON_EPT_MISCONFIG) {
 		return handle_ept_misconfig(vcpu);
+	}
 #endif
 
 	exit_handler_index = array_index_nospec((u16)exit_reason.basic,
@@ -6099,12 +6127,26 @@ unexpected_vmexit:
 	vcpu->run->internal.ndata = 2;
 	vcpu->run->internal.data[0] = exit_reason.full;
 	vcpu->run->internal.data[1] = vcpu->arch.last_vmentry_cpu;
+	
 	return 0;
 }
 
+/*
+ * CMPE 283 Assignment 2
+ * Update vm exit and time in vm counter here
+ */
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
-	int ret = __vmx_handle_exit(vcpu, exit_fastpath);
+	u64 start_time = rdtsc();
+	u64 delta_time;
+	int ret;
+        // grab lock if available 
+	if (!isLockInit) {
+		spin_lock_init(&vmExitCntLock);
+		isLockInit = TRUE;
+	}
+
+	ret = __vmx_handle_exit(vcpu, exit_fastpath);
 
 	/*
 	 * Even when current exit reason is handled by KVM internally, we
@@ -6118,6 +6160,11 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		vcpu->run->flags |= KVM_RUN_X86_BUS_LOCK;
 		return 0;
 	}
+	delta_time = rdtsc() - start_time;
+	spin_lock(&vmExitCntLock);
+	vm_exits_cnt++;
+	vm_total_time += delta_time;
+	spin_unlock(&vmExitCntLock);
 	return ret;
 }
 
