@@ -93,6 +93,11 @@ extern u64 vm_total_time;
  */
 static spinlock_t vmExitCntLock;
 static bool isLockInit = FALSE;
+/*
+ * update exit reason
+ */
+extern int update_exit_reason_cnt(int);
+
 
 
 
@@ -5971,6 +5976,10 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	u16 exit_handler_index;
 
 	/*
+	 * Increment count of specific exit
+	 */
+
+	/*
 	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
 	 * updated. Another good is, in kvm_vm_ioctl_get_dirty_log, before
 	 * querying dirty_bitmap, we only need to kick all vcpus out of guest
@@ -6115,6 +6124,8 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	if (!kvm_vmx_exit_handlers[exit_handler_index])
 		goto unexpected_vmexit;
 
+	printk(KERN_INFO "DEBUG %d", exit_handler_index);
+	update_exit_reason_cnt(exit_handler_index);
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
