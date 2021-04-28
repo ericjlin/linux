@@ -19,7 +19,9 @@ Assignment2
   - Install virtual manager and run a VM in the VM
     - sudo apt install virt-manager
     - virt-manager
-  - Add test file to the nested virtual manager to check for number of exits and how many cycles spent in the exit
+  - Add test file to the nested virtual manager to check for number of exits and how many cycles spent in the exit.
+    See link below to view test script
+    - https://github.com/ericjlin/linux/blob/master/test_assignment2.c
   - Sample Output:
   ![alt text](https://github.com/ericjlin/linux/blob/master/assign2_sample_test.png)
 ### 3. Comments on the frequency of exits:
