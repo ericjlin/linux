@@ -6124,8 +6124,8 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	if (!kvm_vmx_exit_handlers[exit_handler_index])
 		goto unexpected_vmexit;
 
-	printk(KERN_INFO "DEBUG %d", exit_handler_index);
-	update_exit_reason_cnt(exit_handler_index);
+	// printk(KERN_INFO "DEBUG %d", exit_handler_index);
+	//update_exit_reason_cnt(exit_handler_index);
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
@@ -6158,6 +6158,13 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	}
 
 	ret = __vmx_handle_exit(vcpu, exit_fastpath);
+	//if(ret > 0) {
+	if(vcpu->run->exit_reason >= 0 && vcpu->run->exit_reason < 69) {
+	        spin_lock(&vmExitCntLock);
+	        update_exit_reason_cnt((int)vcpu->run->exit_reason);
+	        spin_unlock(&vmExitCntLock);
+	}
+	//}
 
 	/*
 	 * Even when current exit reason is handled by KVM internally, we
