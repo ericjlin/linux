@@ -21,6 +21,6 @@ Assignment2
     - virt-manager
   - Add test file to the nested virtual manager to check for number of exits and how many cycles spent in the exit
   - Sample Output:
-  ![alt text](https://github.com/ericjlin/linux/assign2_sample_test.png)
+  ![alt text](https://github.com/ericjlin/linux/blob/master/assign2_sample_test.png)
 ### 3. Comments on the frequency of exits:
   - The rate of number of exits seem to increase at a constant rate. It'll increase by 300 exits to 500 exits without me doing much on the VM. If I run the cpuid command on linux, the number of exits is around 3686. A full vm boot involves around 640,000 exits with one example around 635,884 exits.
