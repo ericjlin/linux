@@ -22,6 +22,7 @@ Assignment2
   - Add test file to the nested virtual manager to check for number of exits and how many cycles spent in the exit.
     See link below to view test script
     - https://github.com/ericjlin/linux/blob/master/test_assignment2.c
+    - Basically called cpuid function from include/asm/processor.h which takes in a extra parameter,op, and set eax to it. This is how I call the 0x4fffffff leaf function 
   - Sample Output:
   ![alt text](https://github.com/ericjlin/linux/blob/master/assign2_sample_test.png)
 ### 3. Comments on the frequency of exits:
