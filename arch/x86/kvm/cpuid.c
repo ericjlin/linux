@@ -1158,8 +1158,7 @@ void update_exit_reason_cnt(int exit_handler_index, int exists) {
 	}
 }
 
-int get_exit_type_cnt(int exit_handler_index) {
-	printk("Check exit handler count.....%d", exit_handler_index);
+int get_exit_type_cnt(u32 exit_handler_index) {
 	switch(exit_handler_index) {
 		case -1:
 			// exit type is not supported
