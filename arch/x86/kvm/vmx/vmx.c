@@ -87,6 +87,9 @@ extern u32 vm_exits_cnt;
  */
 extern u64 vm_total_time;
 
+extern u32 error_exit_type_cnt;
+
+
 /*
  * Spinlock for cmpe 283 assignment 2
  *
@@ -6125,10 +6128,13 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		goto unexpected_vmexit;
 
 	// printk(KERN_INFO "DEBUG %d", exit_handler_index);
-	//update_exit_reason_cnt(exit_handler_index);
+	spin_lock(&vmExitCntLock);
+	update_exit_reason_cnt(exit_handler_index);
+	spin_unlock(&vmExitCntLock);
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
+	printk(KERN_INFO "unexpected exit reason %d", exit_handler_index);
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
 		    exit_reason.full);
 	dump_vmcs();
@@ -6159,11 +6165,15 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 
 	ret = __vmx_handle_exit(vcpu, exit_fastpath);
 	//if(ret > 0) {
-	if(vcpu->run->exit_reason >= 0 && vcpu->run->exit_reason < 69) {
+	//if(vcpu->run->exit_reason >= 0 && vcpu->run->exit_reason <= 69) {
+	// spin_lock(&vmExitCntLock);
+	// update_exit_reason_cnt((int)vcpu->run->exit_reason);
+	// spin_unlock(&vmExitCntLock);
+	/*} else {
 	        spin_lock(&vmExitCntLock);
-	        update_exit_reason_cnt((int)vcpu->run->exit_reason);
+	        error_exit_type_cnt++;
 	        spin_unlock(&vmExitCntLock);
-	}
+	}*/
 	//}
 
 	/*

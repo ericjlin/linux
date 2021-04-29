@@ -41,6 +41,10 @@ int exit_type_cnt[70] =
 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+u32 error_exit_type_cnt = 0;
+EXPORT_SYMBOL(error_exit_type_cnt);
+
 /*
  * Unlike "struct cpuinfo_x86.x86_capability", kvm_cpu_caps doesn't need to be
  * aligned to sizeof(unsigned long) because it's not accessed via bitops.
@@ -1147,13 +1151,10 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
 void update_exit_reason_cnt(int exit_handler_index) {
-	//if (0 <= exit_handler_index && exit_handler_index <= 69) {
 	exit_type_cnt[exit_handler_index]++;
-	//}
 }
 
-int get_exit_type_cnt(int exit_handler_index) {
-	printk("Check exit handler count.....%d", exit_handler_index);
+int get_exit_type_cnt(u32 exit_handler_index) {
 	switch(exit_handler_index) {
 		case 35:
 			return -1;
@@ -1164,9 +1165,7 @@ int get_exit_type_cnt(int exit_handler_index) {
 		case 65:
 			return -1;
 		default:
-			if (exit_handler_index >= 0 && exit_handler_index < 69)
-			{
-				printk("grabbing the exit cnt....%d", exit_handler_index);
+			if (exit_handler_index <= 69) {
 				return exit_type_cnt[exit_handler_index];	
 			} else {
 				return -1;
@@ -1185,10 +1184,10 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", ecx);
+	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
 	// pr_info("test test test");
 	if (eax == 0x4ffffffe) {
-		// int exit_type = ecx;
+		//int exit_type = ecx;
 		//printk(KERN_INFO "DEBUG EAX=0x4ffffffe %d", exit_type_cnt[exit_type]);
 		// kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
 		if (get_exit_type_cnt(ecx) < 0) {
@@ -1197,10 +1196,10 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 			ecx = 0x0;
 			edx = 0xffffffff;
 		} else {
-			// printk(KERN_INFO "DEBUG EAX=0x4ffffffe %d", exit_type_cnt[exit_type]);
 			eax = (u32) get_exit_type_cnt(ecx);
-			ecx = 0x0;
+			// ecx = 0x0;
 		}
+		// printk(KERN_INFO "Error exit type cnt = %d \n eax = %d", ecx, eax);
 		kvm_rax_write(vcpu, eax);
                 kvm_rbx_write(vcpu, ebx);
                 kvm_rcx_write(vcpu, ecx);
