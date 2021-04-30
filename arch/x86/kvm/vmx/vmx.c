@@ -99,7 +99,7 @@ static bool isLockInit = FALSE;
 /*
  * update exit reason
  */
-extern int update_exit_reason_cnt(int);
+extern int update_exit_reason_cnt(int, int);
 
 
 
@@ -6124,12 +6124,16 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 
 	exit_handler_index = array_index_nospec((u16)exit_reason.basic,
 						kvm_vmx_max_exit_handlers);
-	if (!kvm_vmx_exit_handlers[exit_handler_index])
+	if (!kvm_vmx_exit_handlers[exit_handler_index]) {
+		spin_lock(&vmExitCntLock);
+        	update_exit_reason_cnt(exit_handler_index, -1);
+        	spin_unlock(&vmExitCntLock);
 		goto unexpected_vmexit;
+	}
 
 	// printk(KERN_INFO "DEBUG %d", exit_handler_index);
 	spin_lock(&vmExitCntLock);
-	update_exit_reason_cnt(exit_handler_index);
+	update_exit_reason_cnt(exit_handler_index, 1);
 	spin_unlock(&vmExitCntLock);
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 

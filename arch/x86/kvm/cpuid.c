@@ -1150,12 +1150,19 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
-void update_exit_reason_cnt(int exit_handler_index) {
-	exit_type_cnt[exit_handler_index]++;
+void update_exit_reason_cnt(int exit_handler_index, int exists) {
+	if (exists > 0) {
+		exit_type_cnt[exit_handler_index]++;
+	} else {
+		exit_type_cnt[exit_handler_index] = -1;
+	}
 }
 
 int get_exit_type_cnt(u32 exit_handler_index) {
 	switch(exit_handler_index) {
+		case -1:
+			// exit type is not supported
+			return -2;
 		case 35:
 			return -1;
 		case 38:
@@ -1187,12 +1194,12 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
 	if (eax == 0x4ffffffe) {
 		//int exit_type = ecx;
-		if (get_exit_type_cnt(ecx) < 0) {
+		if (get_exit_type_cnt(ecx) == -1) {
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
 			edx = 0xffffffff;
-		} else if (get_exit_type_cnt(ecx) == 0) { // exit type has been disabled so never incremented
+		} else if (get_exit_type_cnt(ecx) == -2) { // exit type has been disabled so never incremented
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
