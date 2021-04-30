@@ -1157,8 +1157,6 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	 	*/
 		// printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
 		
-		kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
-		
 		eax = vm_exits_cnt;
 		ebx = (int)(vm_total_time >> 32);
 		ecx = vm_total_time;
