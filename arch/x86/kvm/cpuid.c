@@ -1185,27 +1185,26 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
 	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
-	// pr_info("test test test");
 	if (eax == 0x4ffffffe) {
 		//int exit_type = ecx;
-		//printk(KERN_INFO "DEBUG EAX=0x4ffffffe %d", exit_type_cnt[exit_type]);
-		// kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
 		if (get_exit_type_cnt(ecx) < 0) {
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
 			edx = 0xffffffff;
+		} else if (get_exit_type_cnt(ecx) == 0) { // exit type has been disabled so never incremented
+			eax = 0x0;
+			ebx = 0x0;
+			ecx = 0x0;
+			edx = 0x0;
 		} else {
 			eax = (u32) get_exit_type_cnt(ecx);
-			// ecx = 0x0;
 		}
 		// printk(KERN_INFO "Error exit type cnt = %d \n eax = %d", ecx, eax);
 		kvm_rax_write(vcpu, eax);
                 kvm_rbx_write(vcpu, ebx);
                 kvm_rcx_write(vcpu, ecx);
                 kvm_rdx_write(vcpu, edx);
-		// report number of exits based on exit type
-		// eax = (u32) vm_exits_cnt;
 	} else if (eax == 0x4fffffff) {
 		/*
 	 	 * CMPE 283 Assignment 2
