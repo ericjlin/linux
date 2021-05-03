@@ -28,7 +28,7 @@ Assignment2
 ### 3. Comments on the frequency of exits:
   - The rate of number of exits seem to increase at a constant rate. It'll increase around 1000 - 2000 exits without me doing much on the VM. Idle cycle time increase can vary, with observed cycle time ranging from 30,000,000 to 60,000,000 cycles. If I run the cpuid command on linux command line, the number of exits is around 1000 to 3686. The number of cycles spent running the command line cpuid is around 49,723,776. For creating a file, writing to it and saving it to the VM, it takes around 9,161 exits and 307,421,254 cycles. A full vm boot involves around 616,692 exits and 9,643,215,531 cycles. It looks like boot up is one of the longest operations that take a lot of exits and time to complete. File operations like creating a file is second in terms of how much exits and cycles spent on the operation from what I've seen so far with the testing.
 
-### Instrumentation Hypercall
+# Instrumentation Hypercall
 Assignment3
 
 ### 1. Work Distribution
