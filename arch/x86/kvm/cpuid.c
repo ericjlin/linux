@@ -1193,13 +1193,12 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	ecx = kvm_rcx_read(vcpu);
 	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
 	if (eax == 0x4ffffffe) {
-		//int exit_type = ecx;
 		if (get_exit_type_cnt(ecx) == -1) {
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
 			edx = 0xffffffff;
-		} else if (get_exit_type_cnt(ecx) == -2) { // exit type has been disabled so never incremented
+		} else if (get_exit_type_cnt(ecx) == -2) { // exit type has been disabled
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
