@@ -36,11 +36,11 @@ EXPORT_SYMBOL(vm_total_time);
 /*
  * Assignment 3 Declare counter variable for each exit
  */
-int exit_type_cnt[70] = 
+int exit_type_cnt[75] = 
 {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 , 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 u32 error_exit_type_cnt = 0;
 EXPORT_SYMBOL(error_exit_type_cnt);
@@ -1172,7 +1172,7 @@ int get_exit_type_cnt(u32 exit_handler_index) {
 		case 65:
 			return -1;
 		default:
-			if (exit_handler_index <= 69) {
+			if (exit_handler_index <= 69 || exit_handler_index == 74) {
 				return exit_type_cnt[exit_handler_index];	
 			} else {
 				return -1;
@@ -1191,14 +1191,13 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	// printk(KERN_INFO "DEBUG in emulate kvm cpuid %x", eax);
 	if (eax == 0x4ffffffe) {
 		if (get_exit_type_cnt(ecx) == -1) {
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
 			edx = 0xffffffff;
-		} else if (get_exit_type_cnt(ecx) == -2) { // exit type has been disabled
+		} else if (get_exit_type_cnt(ecx) == -2 || get_exit_type_cnt(ecx) == 0) { // exit type has been disabled
 			eax = 0x0;
 			ebx = 0x0;
 			ecx = 0x0;
@@ -1206,7 +1205,6 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 		} else {
 			eax = (u32) get_exit_type_cnt(ecx);
 		}
-		// printk(KERN_INFO "Error exit type cnt = %d \n eax = %d", ecx, eax);
 		kvm_rax_write(vcpu, eax);
                 kvm_rbx_write(vcpu, ebx);
                 kvm_rcx_write(vcpu, ecx);
@@ -1218,7 +1216,6 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 		 * set the total number of exits and time spent in exit
 		 * # of exits will be set to eax and total time in ecx
 	 	*/
-		// printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
 		
 		eax = vm_exits_cnt;
 		ebx = (int)(vm_total_time >> 32);
