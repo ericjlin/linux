@@ -1154,6 +1154,7 @@ void update_exit_reason_cnt(int exit_handler_index, int exists) {
 	if (exists > 0) {
 		exit_type_cnt[exit_handler_index]++;
 	} else {
+		// printk(KERN_INFO "Negative number %d", exists);
 		exit_type_cnt[exit_handler_index] = -1;
 	}
 }

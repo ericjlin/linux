@@ -5978,9 +5978,15 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	u32 vectoring_info = vmx->idt_vectoring_info;
 	u16 exit_handler_index;
 
+	// printk(KERN_INFO "DEBUG exit reason %d", exit_reason.basic);
+
 	/*
 	 * Increment count of specific exit
 	 */
+	spin_lock(&vmExitCntLock);
+        update_exit_reason_cnt(exit_reason.basic, 1);
+        spin_unlock(&vmExitCntLock);
+
 
 	/*
 	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
@@ -6052,17 +6058,6 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		return 0;
 	}
 
-
-	if (!kvm_vmx_exit_handlers[exit_reason.basic]) {
-		spin_lock(&vmExitCntLock);
-                update_exit_reason_cnt(exit_reason.basic, -1);
-                spin_unlock(&vmExitCntLock);
-	} else {
-		spin_lock(&vmExitCntLock);
-		update_exit_reason_cnt(exit_reason.basic, 1);
-		spin_unlock(&vmExitCntLock);
-	}
-
 	/*
 	 * Note:
 	 * Do not try to fix EXIT_REASON_EPT_MISCONFIG if it caused by
@@ -6115,19 +6110,6 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		return 1;
 	}
 
-	/*
-
-	spin_lock(&vmExitCntLock);
-	update_exit_reason_cnt(exit_reason.basic, 1);
-	spin_unlock(&vmExitCntLock);
-	
-	if (!kvm_vmx_exit_handlers[exit_reason.basic]) {
-		spin_lock(&vmExitCntLock);
-                update_exit_reason_cnt(exit_reason.basic, -1);
-                spin_unlock(&vmExitCntLock);
-	}
-	*/
-
 	if (exit_reason.basic >= kvm_vmx_max_exit_handlers)
 		goto unexpected_vmexit;
 #ifdef CONFIG_RETPOLINE
@@ -6153,13 +6135,12 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 		 * CMPE 283 Assignment 3
 		 * exit handler has been disabled
 		 */
-		// spin_lock(&vmExitCntLock);
-        	// update_exit_reason_cnt(exit_handler_index, -1);
-        	// spin_unlock(&vmExitCntLock);
+		spin_lock(&vmExitCntLock);
+        	update_exit_reason_cnt(exit_handler_index, -1);
+        	spin_unlock(&vmExitCntLock);
 		goto unexpected_vmexit;
 	}
 
-	// printk(KERN_INFO "DEBUG %d", exit_handler_index);
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
@@ -6193,17 +6174,6 @@ static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	}
 
 	ret = __vmx_handle_exit(vcpu, exit_fastpath);
-	//if(ret > 0) {
-	//if(vcpu->run->exit_reason >= 0 && vcpu->run->exit_reason <= 69) {
-	// spin_lock(&vmExitCntLock);
-	// update_exit_reason_cnt((int)vcpu->run->exit_reason);
-	// spin_unlock(&vmExitCntLock);
-	/*} else {
-	        spin_lock(&vmExitCntLock);
-	        error_exit_type_cnt++;
-	        spin_unlock(&vmExitCntLock);
-	}*/
-	//}
 
 	/*
 	 * Even when current exit reason is handled by KVM internally, we
