@@ -52,3 +52,15 @@ Assignment3
 ### 4. Of the exit types defined in the SDM, which are the most frequent? Least?
 
   The most frequent exit type are exit type 28, 31 and 48. Exit type 48, EPT Violation, has the most exit type with 229,108 exits. Exit type 28, control-register accesses, comes in second at 31,145 exits. Exit type 31, RDMSR, comes in third with 639 exits. On the otherhand, exit type 29, MOV DR, and exit type 46, Access to GDTR or IDTR, were one of the least frequent exit types with only 1 exit recorded each. These exit types were recorded a little after boot up so there may be more after performing more operation on the VM. In total, there were 16 exit types activated which is pretty little considering how many exit types are in the Intel SDM. One thing to note, this is done on a very old computer. My computer is using a Haswell chip which is a 4th generation Intel chip which came out around 7 years ago so it's possible there are fewer exit types supported due to the age of the chip.
+
+# Virtulization
+Assignment4
+
+### 1. Work Distribution
+  - I did this assignment by myself.
+
+### 2. Include a sample of your print of exit count output from dmesg from “with ept” and “without ept”.
+Note: Using test file in the nest VM to count exit types
+### 3. What did you learn from the count of exits? Was the count what you expected? If not, why not?
+### 3. What changed between the two runs (ept vs no-ept)?
+One big change is the performance of the VM when running on no-ept. With no-ept, the VM was running really slow. Every action in the VM lagged and performance was low.
