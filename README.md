@@ -65,13 +65,13 @@ Used test file in the nest VM to count exit types.
 
 #### With Ept
 
-![alt text] (https://github.com/ericjlin/linux/blob/assignment4/with_ept_output1.png)
-![alt text] (https://github.com/ericjlin/linux/blob/assignment4/with_ept_output2.png)
+![alt text](https://github.com/ericjlin/linux/blob/assignment4/with_ept_output1.png)
+![alt text](https://github.com/ericjlin/linux/blob/assignment4/with_ept_output2.png)
 
 #### Without Ept
 
-![alt text] (https://github.com/ericjlin/linux/blob/assignment4/withoutEPT_output1.png)
-![alt text] (https://github.com/ericjlin/linux/blob/assignment4/withoutEPT_output2.png)
+![alt text](https://github.com/ericjlin/linux/blob/assignment4/withoutEPT_output1.png)
+![alt text](https://github.com/ericjlin/linux/blob/assignment4/withoutEPT_output2.png)
 
 ### 3. What did you learn from the count of exits? Was the count what you expected? If not, why not?
 ### 4. What changed between the two runs (ept vs no-ept)?
