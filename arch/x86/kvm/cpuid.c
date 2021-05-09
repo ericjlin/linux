@@ -34,6 +34,18 @@ EXPORT_SYMBOL(vm_exits_cnt);
 EXPORT_SYMBOL(vm_total_time);
 
 /*
+ * Assignment 3 Declare counter variable for each exit
+ */
+int exit_type_cnt[75] = 
+{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+u32 error_exit_type_cnt = 0;
+EXPORT_SYMBOL(error_exit_type_cnt);
+
+/*
  * Unlike "struct cpuinfo_x86.x86_capability", kvm_cpu_caps doesn't need to be
  * aligned to sizeof(unsigned long) because it's not accessed via bitops.
  */
@@ -1138,6 +1150,39 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
+void update_exit_reason_cnt(int exit_handler_index, int exists) {
+	if (exists > 0) {
+		exit_type_cnt[exit_handler_index]++;
+	} else {
+		// printk(KERN_INFO "Negative number %d", exists);
+		exit_type_cnt[exit_handler_index] = -1;
+	}
+}
+
+int get_exit_type_cnt(u32 exit_handler_index) {
+	switch(exit_handler_index) {
+		case -1:
+			// exit type is not supported
+			return -2;
+		case 35:
+			return -1;
+		case 38:
+			return -1;
+		case 42:
+			return -1;
+		case 65:
+			return -1;
+		default:
+			if (exit_handler_index <= 69 || exit_handler_index == 74) {
+				return exit_type_cnt[exit_handler_index];	
+			} else {
+				return -1;
+			}
+	}
+}
+
+EXPORT_SYMBOL_GPL(update_exit_reason_cnt);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
@@ -1147,15 +1192,31 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	/*
-	 * CMPE 283 Assignment 2
-	 */
-	if (eax == 0x4fffffff) {
+	if (eax == 0x4ffffffe) {
+		if (get_exit_type_cnt(ecx) == -1) {
+			eax = 0x0;
+			ebx = 0x0;
+			ecx = 0x0;
+			edx = 0xffffffff;
+		} else if (get_exit_type_cnt(ecx) == -2 || get_exit_type_cnt(ecx) == 0) { // exit type has been disabled
+			eax = 0x0;
+			ebx = 0x0;
+			ecx = 0x0;
+			edx = 0x0;
+		} else {
+			eax = (u32) get_exit_type_cnt(ecx);
+		}
+		kvm_rax_write(vcpu, eax);
+                kvm_rbx_write(vcpu, ebx);
+                kvm_rcx_write(vcpu, ecx);
+                kvm_rdx_write(vcpu, edx);
+	} else if (eax == 0x4fffffff) {
 		/*
+	 	 * CMPE 283 Assignment 2
+	 	 *
 		 * set the total number of exits and time spent in exit
 		 * # of exits will be set to eax and total time in ecx
 	 	*/
-		// printk(KERN_INFO "DEBUG EAX=0x%u\n", eax);
 		
 		eax = vm_exits_cnt;
 		ebx = (int)(vm_total_time >> 32);

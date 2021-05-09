@@ -87,12 +87,20 @@ extern u32 vm_exits_cnt;
  */
 extern u64 vm_total_time;
 
+extern u32 error_exit_type_cnt;
+
+
 /*
  * Spinlock for cmpe 283 assignment 2
  *
  */
 static spinlock_t vmExitCntLock;
 static bool isLockInit = FALSE;
+/*
+ * update exit reason
+ */
+extern int update_exit_reason_cnt(int, int);
+
 
 
 
@@ -5970,6 +5978,16 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	u32 vectoring_info = vmx->idt_vectoring_info;
 	u16 exit_handler_index;
 
+	// printk(KERN_INFO "DEBUG exit reason %d", exit_reason.basic);
+
+	/*
+	 * Increment count of specific exit
+	 */
+	spin_lock(&vmExitCntLock);
+        update_exit_reason_cnt(exit_reason.basic, 1);
+        spin_unlock(&vmExitCntLock);
+
+
 	/*
 	 * Flush logged GPAs PML buffer, this will make dirty_bitmap more
 	 * updated. Another good is, in kvm_vm_ioctl_get_dirty_log, before
@@ -6112,12 +6130,21 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 
 	exit_handler_index = array_index_nospec((u16)exit_reason.basic,
 						kvm_vmx_max_exit_handlers);
-	if (!kvm_vmx_exit_handlers[exit_handler_index])
+	if (!kvm_vmx_exit_handlers[exit_handler_index]) {
+		/*
+		 * CMPE 283 Assignment 3
+		 * exit handler has been disabled
+		 */
+		spin_lock(&vmExitCntLock);
+        	update_exit_reason_cnt(exit_handler_index, -1);
+        	spin_unlock(&vmExitCntLock);
 		goto unexpected_vmexit;
+	}
 
 	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
+	printk(KERN_INFO "unexpected exit reason %d", exit_handler_index);
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
 		    exit_reason.full);
 	dump_vmcs();
