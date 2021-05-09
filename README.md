@@ -1,4 +1,3 @@
-# CMPE 283 Virtulization
 Eric Lin
 
 # ModifyingKVMBehavior
